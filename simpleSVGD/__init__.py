@@ -1,4 +1,5 @@
 import numpy as _np
+import tqdm as _tqdm
 from scipy.spatial.distance import pdist as _pdist, squareform as _squareform
 
 
@@ -21,7 +22,7 @@ def _svgd_kernel(theta, h=-1):
 
 
 def update(
-    x0, lnprob, n_iter=1000, stepsize=1e-3, bandwidth=-1, alpha=0.9, debug=False
+    x0, lnprob, n_iter=1000, stepsize=1e-3, bandwidth=-1, alpha=0.9
 ):
     # Check input
     if x0 is None or lnprob is None:
@@ -32,21 +33,24 @@ def update(
     # adagrad with momentum
     fudge_factor = 1e-6
     historical_grad = 0
-    for iter in range(n_iter):
-        if debug and (iter + 1) % 1000 == 0:
-            print("iter " + str(iter + 1))
+    try:
+        for iter in _tqdm.trange(n_iter):
 
-        lnpgrad = lnprob(theta)
-        # calculating the kernel matrix
-        kxy, dxkxy = _svgd_kernel(theta, h=-1)
-        grad_theta = (_np.matmul(kxy, lnpgrad) + dxkxy) / x0.shape[0]
+            lnpgrad = lnprob(theta)
+            # calculating the kernel matrix
+            kxy, dxkxy = _svgd_kernel(theta, h=-1)
+            grad_theta = (_np.matmul(kxy, lnpgrad) + dxkxy) / x0.shape[0]
 
-        # adagrad
-        if iter == 0:
-            historical_grad = historical_grad + grad_theta ** 2
-        else:
-            historical_grad = alpha * historical_grad + (1 - alpha) * (grad_theta ** 2)
-        adj_grad = _np.divide(grad_theta, fudge_factor + _np.sqrt(historical_grad))
-        theta = theta + stepsize * adj_grad
+            # adagrad
+            if iter == 0:
+                historical_grad = historical_grad + grad_theta ** 2
+            else:
+                historical_grad = alpha * historical_grad + \
+                    (1 - alpha) * (grad_theta ** 2)
+            adj_grad = _np.divide(grad_theta, fudge_factor +
+                                  _np.sqrt(historical_grad))
+            theta = theta + stepsize * adj_grad
+    except KeyboardInterrupt:
+        pass
 
     return theta
