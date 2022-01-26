@@ -22,6 +22,6 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.7",
-    install_requires=["numpy", "tqdm", "scipy"],
+    install_requires=["numpy", "tqdm", "scipy", "matplotlib"],
     extras_require={"dev": ["black", "pytest", ]},
 )
