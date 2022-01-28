@@ -22,7 +22,7 @@ git clone git@github.com:larsgeb/simpleSVGD.git
 cd simpleSVGD
 pip install -e .
 ```
-## Mini-tutorial
+# Mini-tutorial
 
 This package can be used with minimal development. The only thing one needs to 
 supply to the algorithm is:
@@ -30,6 +30,8 @@ supply to the algorithm is:
 1. The gradient of the function to optimize, `gradient_fn(samples)`. The function itself is not needed.
 2. An initial collection of samples `initial_samples`, a `numpy.array`. It helps if these are close to the target
 function/distribution. 
+
+## Input/output of your `gradient_fn`
 
 It is essential to get the input/output shapes of the target (gradient) right. As input, it should take an arbitrary amount of samples, with the appropriate dimensionality. This means if ones wants 430 samples on a 3 dimensional function, the input/output shapes looks like this:
 ```python
@@ -51,6 +53,8 @@ dimensions = 2
 
 initial_samples = np.random.normal(mean, standard_dev, [n_samples, dimensions])
 ```
+
+## Defining an example target
 
 A good 2-dimensional test function would be the Himmelblau function:
 ```python
@@ -99,6 +103,12 @@ def Himmelblau_grad(input_array: np.array) -> np.array:
     return output_array / smoothing
 ```
 
+## Running the algorithm
+
+To run the algorithm with a 1000 samples that are initially Normally 
+distribution (mean=0, standard deviation=3, parameters chosen based on prior
+belief), we simply call `simpleSVGD.update()` in the following way:
+
 ```python
 initial_samples = np.random.normal(0, 3, [1000, 2])
 
@@ -109,27 +119,30 @@ plt.xlabel("Parameter 0")
 plt.ylabel("Parameter 1")
 plt.title("SVGD animation on the Himmelblau function")
 
-
 final_samples = simpleSVGD.update(
     initial_samples,
     Himmelblau_grad,
     n_iter=130,
+    # AdaGrad parameters
     stepsize=1e-1,
     alpha=0.9,
+    fudge_factor=1e-3,
+    historical_grad=1,
     #animate=True,
     #background=background,
     #figure=figure,
 )
 ```
 
-When running this code in a notebook, one can uncomment the animation lines to produce the following:
+To animate the algorithm, simply uncomment the comments. The result should be
+similar to this:
 
 
 https://user-images.githubusercontent.com/21038893/151603377-a473e7b1-f7b4-417b-a685-9c0cfa98dc15.mov
 
 
 
-## Stein Variational Gradient Descent (SVGD) 
+# The origins of SVGD
 SVGD is a general purpose variational inference algorithm that forms a natural
 counterpart of gradient descent for optimization. SVGD iteratively transports a
 set of particles to match with the target distribution, by applying a form of
@@ -137,4 +150,4 @@ functional gradient descent that minimizes the KL divergence.
 
 For more information, please visit the original implementers project website -
 [SVGD](http://www.cs.utexas.edu/~qlearning/project.html?p=vgd), or their
-publication Qiang Liu and Dilin Wang. [Stein Variational Gradient Descent (SVGD): A General Purpose Bayesian Inference Algorithm](http://arxiv.org/abs/1608.04471). NIPS, 2016.
+publication; Qiang Liu and Dilin Wang. [Stein Variational Gradient Descent (SVGD): A General Purpose Bayesian Inference Algorithm](http://arxiv.org/abs/1608.04471). NIPS, 2016.
