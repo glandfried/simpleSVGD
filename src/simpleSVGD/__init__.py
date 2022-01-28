@@ -1,5 +1,6 @@
-import numpy as _np
-import tqdm as _tqdm
+from enum import auto
+import numpy as _numpy
+import tqdm.auto as _tqdm_auto
 from scipy.spatial.distance import pdist as _pdist, squareform as _squareform
 import matplotlib.pyplot as _plt
 import matplotlib.figure as _figure
@@ -11,33 +12,35 @@ def _rbf_kernel(theta, h=-1):
     sq_dist = _pdist(theta)
     pairwise_dists = _squareform(sq_dist) ** 2
     if h < 0:  # if h < 0, using median trick
-        h = _np.median(pairwise_dists)
-        h = _np.sqrt(0.5 * h / _np.log(theta.shape[0] + 1))
+        h = _numpy.median(pairwise_dists)
+        h = _numpy.sqrt(0.5 * h / _numpy.log(theta.shape[0] + 1))
 
     # compute the rbf kernel
-    Kxy = _np.exp(-pairwise_dists / h ** 2 / 2)
+    Kxy = _numpy.exp(-pairwise_dists / h ** 2 / 2)
 
-    dxkxy = -_np.matmul(Kxy, theta)
-    sumkxy = _np.sum(Kxy, axis=1)
+    dxkxy = -_numpy.matmul(Kxy, theta)
+    sumkxy = _numpy.sum(Kxy, axis=1)
     for i in range(theta.shape[1]):
-        dxkxy[:, i] = dxkxy[:, i] + _np.multiply(theta[:, i], sumkxy)
+        dxkxy[:, i] = dxkxy[:, i] + _numpy.multiply(theta[:, i], sumkxy)
     dxkxy = dxkxy / (h ** 2)
     return (Kxy, dxkxy)
 
 
 def update(
-    x0: _np.array,
+    x0: _numpy.array,
     gradient_fn: _Callable,
     # All following parameters are tuning parameters
     n_iter: int = 1000,
     stepsize: float = 1e-3,
     bandwidth: float = -1,
     alpha: float = 0.9,
+    fudge_factor=1e-3,
+    historical_grad=1,
     # All following parameter only concern animation
     animate: bool = False,
     figure: _figure.Figure = None,
     dimensions_to_plot: _List[float] = [0, 1],
-    background: _Tuple[_np.array] = None,
+    background: _Tuple[_numpy.array] = None,
 ):
     """
     Function to update a collection of samples using the SVGD algorithm.
@@ -96,12 +99,9 @@ def update(
 
     # To make sure we don't accidentally update a variable we're not supposed
     # to (i.e. avoid changing a variable by reference)
-    x0_updated = _np.copy(x0)
+    x0_updated = _numpy.copy(x0)
 
     # adagrad with momentum
-    fudge_factor = 1e-6
-    historical_grad = 0
-
     if animate:
         if background is not None:
             x1s, x2s, background_image = background
@@ -109,7 +109,7 @@ def update(
             axis.contour(
                 x1s,
                 x2s,
-                _np.exp(-background_image),
+                _numpy.exp(-background_image),
                 levels=20,
                 alpha=0.5,
                 zorder=0,
@@ -132,14 +132,16 @@ def update(
     # The Try/Except allows on to interrupt the algorithm using CTRL+C while
     # still getting x0_updated at the point of interruption.
     try:
-        for iter in _tqdm.trange(n_iter):
+        for iter in _tqdm_auto.trange(n_iter):
 
             # Calculate all the gradients of the -log(p)
             grad_neglogp = -gradient_fn(x0_updated)
 
             # calculating the kernel matrix
             kxy, dxkxy = _rbf_kernel(x0_updated, h=bandwidth)
-            grad_theta = (_np.matmul(kxy, grad_neglogp) + dxkxy) / x0.shape[0]
+            grad_theta = (_numpy.matmul(kxy, grad_neglogp) + dxkxy) / x0.shape[
+                0
+            ]
 
             # adagrad
             if iter == 0:
@@ -148,14 +150,14 @@ def update(
                 historical_grad = alpha * historical_grad + (1 - alpha) * (
                     grad_theta ** 2
                 )
-            adj_grad = _np.divide(
-                grad_theta, fudge_factor + _np.sqrt(historical_grad)
+            adj_grad = _numpy.divide(
+                grad_theta, fudge_factor + _numpy.sqrt(historical_grad)
             )
             x0_updated = x0_updated + stepsize * adj_grad
 
             if animate:
                 scatter.set_offsets(
-                    _np.hstack(
+                    _numpy.hstack(
                         (
                             x0_updated[:, dimensions_to_plot[0], None],
                             x0_updated[:, dimensions_to_plot[1], None],
@@ -172,8 +174,8 @@ def update(
 
 
 def gradient_vectorizer(non_vectorized_gradient: _Callable):
-    def grd(m: _np.array) -> _np.array:
-        return _np.hstack(
+    def grd(m: _numpy.array) -> _numpy.array:
+        return _numpy.hstack(
             [
                 non_vectorized_gradient(m[idm, :, None])
                 for idm in range(m.shape[0])
