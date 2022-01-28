@@ -124,7 +124,9 @@ final_samples = simpleSVGD.update(
 
 When running this code in a notebook, one can uncomment the animation lines to produce the following:
 
-SVGD_Himmelblau.mov
+
+https://user-images.githubusercontent.com/21038893/151603377-a473e7b1-f7b4-417b-a685-9c0cfa98dc15.mov
+
 
 
 ## Stein Variational Gradient Descent (SVGD) 
