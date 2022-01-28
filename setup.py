@@ -13,8 +13,10 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/larsgeb/simpleSVGD",
     project_urls={
-        "Bug Tracker": "https://github.com/larsgeb/simpleSVGD/issues", },
-    packages=setuptools.find_packages(),
+        "Bug Tracker": "https://github.com/larsgeb/simpleSVGD/issues",
+    },
+    package_dir={"": "src"},
+    packages=setuptools.find_packages(where="src", exclude=["test"]),
     classifiers=[
         "Development Status :: 4 - Beta",
         "Programming Language :: Python :: 3.7",
@@ -23,5 +25,10 @@ setuptools.setup(
     ],
     python_requires=">=3.7",
     install_requires=["numpy", "tqdm", "scipy", "matplotlib"],
-    extras_require={"dev": ["black", "pytest", ]},
+    extras_require={
+        "dev": [
+            "black",
+            "pytest",
+        ]
+    },
 )
