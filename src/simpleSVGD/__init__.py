@@ -183,3 +183,6 @@ def gradient_vectorizer(non_vectorized_gradient: _Callable):
         ).T
 
     return grd
+
+from . import _version
+__version__ = _version.get_versions()['version']

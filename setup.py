@@ -1,10 +1,12 @@
 import setuptools
+import versioneer
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    version=0.1,
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     name="simpleSVGD",
     author="Lars Gebraad",
     author_email="lars.gebraad@erdw.ethz.ch",
@@ -29,6 +31,7 @@ setuptools.setup(
         "dev": [
             "black",
             "pytest",
+            "versioneer",
         ]
     },
 )
