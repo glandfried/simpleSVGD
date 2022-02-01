@@ -6,7 +6,9 @@ distributions found in [HMCLab](https://github.com/larsgeb/HMCLab).
 By default, this package uses **radial basis functions** to compute sample
 interaction and **AdaGrad** to optimize the samples.
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/larsgeb/simpleSVGD/HEAD?labpath=%2Fnotebooks%2FTutorial%20on%20using%20simpleSVGD.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/larsgeb/simpleSVGD/HEAD?labpath=%2Fnotebooks%2FTutorial%20on%20using%20simpleSVGD.ipynb) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5938430.svg)](https://doi.org/10.5281/zenodo.5938430)
+
+
 
 ## Installation:
 
