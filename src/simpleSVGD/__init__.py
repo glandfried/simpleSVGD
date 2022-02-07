@@ -5,7 +5,6 @@ import matplotlib.figure as _figure
 from typing import Callable as _Callable, List as _List, Tuple as _Tuple
 
 from .kernels import rbf_kernel as _rbf_kernel
-from .helpers import TorchWrapper as _TorchWrapper
 
 
 from . import _version
@@ -201,6 +200,7 @@ def update_torch(
         matplotlib.pyplot.contour, to make plotting a background easier.
     """
     import torch as _torch
+    from .helpers import TorchWrapper as _TorchWrapper
 
     # Check input
     if x0 is None or gradient_fn is None:
