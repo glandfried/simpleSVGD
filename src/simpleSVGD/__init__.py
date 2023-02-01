@@ -1,3 +1,4 @@
+from time import sleep
 import numpy as _numpy
 import tqdm.auto as _tqdm_auto
 import matplotlib.pyplot as _plt
@@ -24,6 +25,7 @@ def update(
     figure: _figure.Figure = None,
     dimensions_to_plot: _List[float] = [0, 1],
     background: _Tuple[_numpy.array] = None,
+    disable_progressbar: bool = False,
 ):
     """
     Function to update a collection of samples using the SVGD algorithm.
@@ -108,21 +110,42 @@ def update(
         figure.canvas.draw()
         _plt.pause(1e-5)
 
+    # adagrad with momentum
+    alpha = 0.9
+    fudge_factor = 1e-6
+    historical_grad = 0
+
     # The Try/Except allows on to interrupt the algorithm using CTRL+C while
     # still getting x0_updated at the point of interruption.
     try:
-        for _ in _tqdm_auto.trange(n_iter):
+        for _ in _tqdm_auto.trange(n_iter, disable=disable_progressbar):
 
             # Calculate all the gradients of the -log(p)
             grad_neglogp = gradient_fn(x0_updated)
 
             # calculating the kernel matrix
             kxy, dxkxy = _rbf_kernel(x0_updated, h=bandwidth)
-            grad_theta = (_numpy.matmul(kxy, grad_neglogp) - dxkxy) / x0.shape[
-                0
-            ]
 
-            x0_updated = x0_updated - stepsize * grad_theta
+            grad_theta = (_numpy.matmul(kxy, grad_neglogp) - dxkxy) / x0.shape[0]
+
+            # x0_updated = x0_updated - stepsize * grad_theta
+
+            # lnpgrad = gradient_fn(theta)
+            # # calculating the kernel matrix
+            # kxy, dxkxy = _rbf_kernel(theta, h=h)
+            # grad_theta = (_np.matmul(kxy, lnpgrad) + dxkxy) / x0.shape[0]
+
+            # adagrad
+            if iter == 0:
+                historical_grad = historical_grad + grad_theta**2
+            else:
+                historical_grad = alpha * historical_grad + (1 - alpha) * (
+                    grad_theta**2
+                )
+            adj_grad = _numpy.divide(
+                grad_theta, fudge_factor + _numpy.sqrt(historical_grad)
+            )
+            x0_updated = x0_updated - stepsize * adj_grad
 
             if animate:
                 scatter.set_offsets(
@@ -155,6 +178,7 @@ def update_torch(
     figure: _figure.Figure = None,
     dimensions_to_plot: _List[float] = [0, 1],
     background: _Tuple[_numpy.array] = None,
+    disable_progressbar: bool = False,
     # Torch algorithm
 ):
     """
@@ -251,7 +275,7 @@ def update_torch(
     # The Try/Except allows on to interrupt the algorithm using CTRL+C while
     # still getting x0_updated at the point of interruption.
     try:
-        for _ in _tqdm_auto.trange(n_iter):
+        for _ in _tqdm_auto.trange(n_iter, disable=disable_progressbar):
 
             def closure():
                 optimizer.zero_grad()
@@ -268,12 +292,8 @@ def update_torch(
                 scatter.set_offsets(
                     _numpy.hstack(
                         (
-                            x0_updated.detach()[
-                                :, dimensions_to_plot[0], None
-                            ],
-                            x0_updated.detach()[
-                                :, dimensions_to_plot[1], None
-                            ],
+                            x0_updated.detach()[:, dimensions_to_plot[0], None],
+                            x0_updated.detach()[:, dimensions_to_plot[1], None],
                         )
                     )
                 )
@@ -281,6 +301,7 @@ def update_torch(
                 _plt.pause(1e-5)
 
     except KeyboardInterrupt:
+        sleep(0.5)
         pass
 
     return x0_updated.detach().numpy()
@@ -288,11 +309,9 @@ def update_torch(
 
 def gradient_vectorizer(non_vectorized_gradient: _Callable):
     def grd(m: _numpy.array) -> _numpy.array:
+
         return _numpy.hstack(
-            [
-                non_vectorized_gradient(m[idm, :, None])
-                for idm in range(m.shape[0])
-            ]
+            [non_vectorized_gradient(m[idm, :, None]) for idm in range(m.shape[0])]
         ).T
 
     return grd
